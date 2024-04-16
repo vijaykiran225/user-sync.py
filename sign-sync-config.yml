@@ -1,0 +1,70 @@
+# This is a template of the main Sign Sync config file
+# Full documentation here - https://adobe-apiplatform.github.io/user-sync.py/en/user-manual/sign_sync.html
+
+# --- Sign Connector Options ---
+sign_orgs:
+  # main connection should have "primary" key
+  primary: connector-sign.yml
+  # Additional Sign Connection configuration files (can have any name other than "primary")
+  vijaychannel: connector-sign.yml
+  #conection3: connector-sign-ter.yml
+  
+# Similar to "directory_users.connectors" in user-sync-config.yml
+identity_source:
+  type: csv
+  connector: /Users/vijaysridhar/Downloads/user-sync-examples/config/connector-csv.yml  
+# Options that govern the synchronization of users
+user_sync:
+  sign_only_limit: 100
+  # sign_only_user_action -action to take for Sign only user (user that is ONLY on the Sign Dashboard)
+  # Default action is to reset (user admin_role removed, user_group set to default group)
+  # options: reset, exclude, remove_groups, remove_roles, deactivate
+  sign_only_user_action: exclude
+  umg : True
+
+# Storage location of Sign data cache. This contains cached users, groups and user assignent info
+# The cache will refresh after 24 hours
+cache:
+  path: cache/sign
+ 
+# User management group/role mappings
+user_management:
+  # sign_group format: sign_org_name::Sign Group Name, default is 'primary'
+  # admin_role: NORMAL_USER if empty
+  # Example 1 - group assignment
+
+  # Example 4 - create user if `create_users` is `True`, otherwise do nothing
+  - directory_group: nikeAdmin
+    sign_group:
+      - vijaychannel::nikeemp
+      - vijaychannel::admin
+      - vijaychannel::nikeuser
+    group_admin: True
+    admin_groups:
+      - vijaychannel::nikeuser
+
+
+primary_group_rules:
+  # sign_groups list can specify groups that aren't necessarily assigned
+  # the user in the sync tool
+  - sign_groups:
+      - nikeEmp
+      - admin
+      - nikeUser
+    # assign the primary group only if the user is a member of all groups
+    # specified in sign_groups
+    primary_group: nikeUser
+# Logging options
+logging:
+  log_to_file: True
+  file_log_directory: sign_logs
+  file_log_name_format: '{:%Y-%m-%d}-sign.log'
+  file_log_level: info
+  console_log_level: debug
+  
+# Invocation defaults - these work similarly to those found in the main UMAPI config
+# they provide default options that can be overridden in the command line
+invocation_defaults:
+  users: mapped
+  test_mode: False
+  # connector: ['csv', '/Users/vijaysridhar/Downloads/user-sync-examples/csvinputs/users-file.csv']

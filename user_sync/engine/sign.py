@@ -75,6 +75,11 @@ class SignSyncEngine:
         return self.connectors[org].sign_groups()
 
     def get_default_group(self, org):
+        print(org, "passed to me")
+        print(self.connectors, "passed to connector")
+        print(self.connectors[org], "passed to connector[org]")
+        print(self.connectors[org].sign_groups(), "passed to connector[org].sg")
+        print(self.connectors[org].sign_groups().values())
         return [g for g in self.connectors[org].sign_groups().values() if g.isDefaultGroup][0]
 
     def run(self, directory_groups, directory_connector):
@@ -90,6 +95,7 @@ class SignSyncEngine:
             self.connectors[org_name] = SignConnector(target_dict, org_name, self.options['test_mode'], self.caller_options['connection'], self.caller_options['cache'])
         
         for org_name in self.connectors:
+            print(org_name,"is the org name !")
             self.sign_groups[org_name] = self.get_groups(org_name)
             self.default_groups[org_name] = self.get_default_group(org_name)
             self.target_groups_by_org[org_name] = set([group for groups in [g['groups']
@@ -110,6 +116,7 @@ class SignSyncEngine:
             # Update user details or insert new user
             self.update_sign_users(
                 self.directory_user_by_user_key, sign_connector, org_name)
+            print("VVVVVVVV  VVVVVVVV  VVVVVVVV  self.sign_only_users_by_org is ",self.sign_only_users_by_org)
             if org_name in self.sign_only_users_by_org:
                 self.handle_sign_only_users(sign_connector, org_name)
         self.log_action_summary()
@@ -152,13 +159,15 @@ class SignSyncEngine:
         self.total_sign_user_count += len(sign_users)
         self.sign_users_by_org[org_name] = sign_users
         for directory_user_key, directory_user in directory_users.items():
+            print(f"vvvvvvvvvv inside for loop'{directory_user}")
             if not self.should_sync(directory_user, org_name):
+                print(f"vvvvvvvvvv skipping for loop'{directory_user_key}")
                 continue
 
             sign_user = sign_users.get(directory_user_key)
             dir_users_for_org[directory_user_key] = directory_user
             assignment_groups = [g for g in directory_user['sign_groups'] if g.umapi_name == org_name]
-
+            print(f"vvvvvvvvvv got this user from get'{sign_user} , {directory_user_key}")
             if not assignment_groups:
                 assignment_groups = [AdobeGroup(self.default_groups[org_name].groupName, org_name)]
 
@@ -168,6 +177,7 @@ class SignSyncEngine:
                     # if Standalone user is inactive, we need to reactivate instead of trying to create new account
                     if inactive_user is not None:
                         try:
+                            print(f"vvvvvvvvvv about to update user '{inactive_user}")
                             state = UserStateInfo(
                                 state='ACTIVE',
                                 comment='Activated by User Sync Tool'
@@ -178,6 +188,7 @@ class SignSyncEngine:
                             self.logger.error(f"Reactivation error for '{inactive_user.email}: "+format(e))
                     else:
                         # if user is totally new then create it
+                        print(f"vvvvvvvvvv about to create user '{inactive_user}")
                         self.insert_new_users(
                             org_name, sign_connector, directory_user, assignment_groups)
                 else:
@@ -215,7 +226,7 @@ class SignSyncEngine:
                 else:
                     desired_groups = set([self.get_primary_group(sign_user, self.sign_user_groups[org_name]).name.lower()])
                 if not is_umg:
-                    desired_groups = set([directory_user['sign_roups'][0].group_name.lower()])
+                    desired_groups = set([directory_user['sign_group'][0].group_name.lower()])
 
                 groups_to_update = {}
                 admin_groups = set([g.group_name for g in directory_user['admin_groups'] if g.umapi_name == org_name])
@@ -302,6 +313,7 @@ class SignSyncEngine:
 
                 if current_pg is None or desired_pg.lower() != current_pg:
                     self.logger.debug(f"Primary group of '{sign_user.email}' is '{desired_pg}'")
+                    print("\r\r\r\n\n\n",groups_to_update," is the groups_to_update")
                     groups_to_update[desired_pg.lower()].isPrimaryGroup = True
 
                 if groups_to_update:
@@ -317,7 +329,9 @@ class SignSyncEngine:
                 self.sign_only_users_by_org[org_name][user] = data
 
     def resolve_primary_group(self, sign_groups):
+        print("\r\r\r\n\n\nVVVVVVVVVVV sign_groups i got is ",sign_groups,"\r\r\r\n\n\n")
         rules = self.options['primary_group_rules']
+        print("\r\r\r\n\n\nVVVVVVVVVVV rules i got is ",rules,"\r\r\r\n\n\n")
         for r in rules:
             if set(sign_groups).intersection(r['sign_groups']) == r['sign_groups']:
                 return r['primary_group']
@@ -348,6 +362,8 @@ class SignSyncEngine:
         :param org_name:
         :return:
         """
+        print("VVVVVVvvvvvv directory_user['sign_groups'] is ", directory_user['sign_groups'])
+        print("VVVVVVvvvvvv org_name is ", org_name)
         if not directory_user['sign_groups']:
             return True
         groups = [g for g in directory_user['sign_groups'] if g.umapi_name == org_name]

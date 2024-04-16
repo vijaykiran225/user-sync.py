@@ -255,7 +255,9 @@ class SignClient:
             # prepare a list of calls to make * Note: calls are prepared by using call
             # syntax (eg, func() and not func), but they will not be run until executed by the wait
             # split into batches of self.bach_size to avoid taking too much memory
-            calls = [handle(sem, o, headers, session) for o in objects]
+            calls = []
+            for o in objects:
+                calls.append(asyncio.create_task(handle(sem, o, headers, session)))
             await asyncio.wait(calls)
 
     async def _get_user(self, semaphore, user_id, header, session):
@@ -305,6 +307,7 @@ class SignClient:
         user_id, group_data = user_group_data
         async with semaphore:
             url = f"{self.api_url}users/{user_id}/groups"
+            print(json.dumps(group_data, cls=JSONEncoder))
             body, code = await self.call_with_retry_async('PUT', url, headers, data=json.dumps(group_data, cls=JSONEncoder), session=session)
             self.logger.info(f"Updated Sign User: {user_id}")
             if code > 299:
