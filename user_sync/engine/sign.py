@@ -500,7 +500,7 @@ class SignSyncEngine:
             groups_to_assign = {}
             for group in groups:
                 wants_group_admin = False
-                if is_umg:
+                if not is_umg:
                     wants_group_admin = directory_user['is_group_admin']
                 else:
                     wants_group_admin = group in directory_user['admin_groups']
