@@ -472,7 +472,7 @@ class SignSyncEngine:
         is_group_admin = False
         admin_groups = set()
         for dir_group, target_groups in group_admin_mapping.items():
-            if dir_group in directory_groups:
+            if dir_group in set(g.lower() for g in directory_groups):
                 is_group_admin = True
                 admin_groups.update(target_groups)
 
@@ -500,7 +500,7 @@ class SignSyncEngine:
             groups_to_assign = {}
             for group in groups:
                 wants_group_admin = False
-                if is_umg:
+                if not is_umg:
                     wants_group_admin = directory_user['is_group_admin']
                 else:
                     wants_group_admin = group in directory_user['admin_groups']
